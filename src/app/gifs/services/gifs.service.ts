@@ -1,13 +1,19 @@
 import { HttpClient } from '@angular/common/http';
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { environment } from '@enviroments/environment';
 import type { GiphyResponse } from '../interfaces/giphy.interfaces';
 import { Gif } from '../interfaces/gif.interface';
 import { GifMapper } from '../mapper/gif.mapper';
-import { map, tap } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 
+const GIFS_KEY = 'searchedGifs';
 
+const loadFromLocalStorage = () => {
+  const gifsFromLocalStorage = localStorage.getItem(GIFS_KEY) ?? '{}';
+  const gifs = JSON.parse(gifsFromLocalStorage);
 
+  return gifs;
+}
 
 @Injectable({ providedIn: 'root' })
 export class GifService {
@@ -17,8 +23,9 @@ export class GifService {
   trendingGifs = signal<Gif[]>([]);
   trendingGifLoading = signal<boolean>(true);
 
-  searchHistory = signal<Record<string, Gif[]>>({});
+  searchHistory = signal<Record<string, Gif[]>>(loadFromLocalStorage());
   searchHistoryKeys = computed(() => Object.keys(this.searchHistory()));
+
 
 
 
@@ -26,6 +33,11 @@ export class GifService {
   constructor() {
     this.loadTrendeingGifs();
   }
+
+  saveGifsToLocalStorage = effect(() => {
+    const historyString = JSON.stringify(this.searchHistory());
+    localStorage.setItem('searchedGifs', historyString)
+  })
 
   loadTrendeingGifs() {
     this.http.get<GiphyResponse>(`${environment.giphyUrl}/gifs/trending`, {
@@ -41,7 +53,7 @@ export class GifService {
     })
   }
 
-  searchGifs(query: string) {
+  searchGifs(query: string): Observable<Gif[]> {
     return this.http.get<GiphyResponse>(`${environment.giphyUrl}/gifs/search`, {
       params: {
         api_key: environment.apiKeyGiphy,
@@ -52,7 +64,6 @@ export class GifService {
       map(({ data }) => data),
       map((items) => GifMapper.mapGiphyItmesToGifArray(items)),
 
-      //TODO History
       tap(items => {
         this.searchHistory.update(history => ({
           ...history,
@@ -65,4 +76,13 @@ export class GifService {
 
     // })
   }
+
+
+
+  getHistoryGifs(query: string) {
+    return this.searchHistory()[query] ?? [];
+  }
+
+
+
 }
