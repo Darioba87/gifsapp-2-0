@@ -2,6 +2,9 @@
 
 GifsApp is a web application built with Angular 19 that allows users to search, view trending, and manage GIFs using the Giphy API.
 
+## Autor
+Dario Brito Alvarez
+
 ## Features
 
 - **Trending GIFs:** Browse the most popular GIFs.
@@ -76,5 +79,3 @@ API keys and endpoints are managed in [`src/environments/environment.ts`](src/en
 ---
 Generado con ❤️ usando Angular 19 y Tailwind CSS.
 
-## Autor
-Dario Brito Alvarez
