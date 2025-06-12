@@ -8,9 +8,11 @@
   #groupDiv>
 
   @for (group of gifService.trendingGifGroup(); track $index) {
+
   <div class="grid gap-4">
     @for (gif of group; track gif.id) {
     <div>
+
       <img class="h-full mw-full rounded-lg object-cover" [src]="gif.url" [alt]="gif.title">
     </div>
     }

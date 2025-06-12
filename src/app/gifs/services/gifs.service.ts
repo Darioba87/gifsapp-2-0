@@ -4,7 +4,7 @@ import { environment } from '@enviroments/environment';
 import type { GiphyResponse } from '../interfaces/giphy.interfaces';
 import { Gif } from '../interfaces/gif.interface';
 import { GifMapper } from '../mapper/gif.mapper';
-import { map, Observable, tap } from 'rxjs';
+import { map, Observable, of, tap } from 'rxjs';
 
 const GIFS_KEY = 'searchedGifs';
 
@@ -21,7 +21,9 @@ export class GifService {
   private http = inject(HttpClient);
 
   trendingGifs = signal<Gif[]>([]);
-  trendingGifLoading = signal<boolean>(true);
+
+  trendingGifLoading = signal<boolean>(false);
+  private trendingPage = signal(0)
 
   trendingGifGroup = computed<Gif[][]>(() => {
     const groups = [];
@@ -52,14 +54,24 @@ export class GifService {
   })
 
   loadTrendeingGifs() {
+    if (this.trendingGifLoading()) return;
+
+    this.trendingGifLoading.set(true);
+
+
     this.http.get<GiphyResponse>(`${environment.giphyUrl}/gifs/trending`, {
       params: {
         api_key: environment.apiKeyGiphy,
         limit: '20',
+        offset: this.trendingPage() * 20,
       }
     }).subscribe((resp) => {
       const gifs = GifMapper.mapGiphyItmesToGifArray(resp.data);
-      this.trendingGifs.set(gifs);
+      this.trendingGifs.update(currentGifs => [
+        ...currentGifs,
+        ...gifs
+      ]);
+      this.trendingPage.update(page => page + 1);
       this.trendingGifLoading.set(false);
 
     })
